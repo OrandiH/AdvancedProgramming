@@ -1,6 +1,7 @@
-package views;
+package sdsmh_server;
 
 import java.awt.Color;
+
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -18,7 +19,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 
-import controller.Controller;
+import sdsmh_server.Controller;
 
 public class LoginView extends JFrame implements ActionListener{
 	/**
@@ -124,7 +125,8 @@ public class LoginView extends JFrame implements ActionListener{
 	public void actionPerformed(ActionEvent act) {
 		if(act.getSource() == btnLogin){
 			String action = "login";
-			controller.attemptLogin(action, txtUsername.getText(), String.valueOf(txtPassword.getPassword()));
+			controller.attemptLogin(action, Integer.valueOf(txtUsername.getText()), String.valueOf(txtPassword.getPassword()));
+			
 		}
 		if(act.getSource() == btnCancel)
 			closeLoginView();

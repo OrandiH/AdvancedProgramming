@@ -1,11 +1,11 @@
-package controller;
+package sdsmh_server;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import views.LoginView;
+import sdsmh_server.LoginView;
 
 public class Controller extends Application {
 	 @Override
@@ -32,12 +32,12 @@ public class Controller extends Application {
 
 	}
 	
-	public void attemptLogin(String action, String studID, String password){
+	public void attemptLogin(String action, int studID, String password){
 		
-		models.Student sobj = models.Student.studentLogin(action, studID, password);
+		Student sobj = Student.studentLogin(action, studID, password);
 		if(sobj != null){
 			loginView.closeLoginView();
-			views.Dashboard.getStudentData(sobj);
+			Dashboard.getStudentData(sobj);
 		}else
 			loginView.loginFailed();
 	}

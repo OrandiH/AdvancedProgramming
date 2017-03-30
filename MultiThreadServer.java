@@ -14,6 +14,12 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
+
+import models.Employee_password;
+import models.FeePayment;
+import models.Student_model;
+import models.Student_password;
 
 //Server class
 public class MultiThreadServer implements Runnable {
@@ -32,15 +38,15 @@ public class MultiThreadServer implements Runnable {
 		try {
 
 			ObjectInputStream in; // client input stream
-			String url = "jdbc:mysql://localhost:3306/ARDS";// URL for database
-			String username = "root";
-			Class.forName("com.mysql.jdbc.Driver");
-			con = DriverManager.getConnection(url, username, "");
-			if (con != null) {
-
-				System.out.println("Waiting on connections");
-				System.out.println("Connected to resources");
-			}
+//			String url = "jdbc:mysql://localhost:3306/ARDS";// URL for database
+//			String username = "root";
+//			Class.forName("com.mysql.jdbc.Driver");
+//			con = DriverManager.getConnection(url, username, "");
+//			if (con != null) {
+//
+//				System.out.println("Waiting on connections");
+//				System.out.println("Connected to resources");
+//			}
 
 			in = new ObjectInputStream(sock.getInputStream());
 			os = new ObjectOutputStream(sock.getOutputStream());
@@ -50,62 +56,99 @@ public class MultiThreadServer implements Runnable {
 			System.out.println("From client " + response.getMessage());
 			String password = getSHA_256Hash(response.getPassword());
 			int ID = response.getId();
+			int transactionID = response.getFee_id();
+			float transactionAmount;
 			// Possible actions from clients
+			//Include while loop here to wait for input from client
 			if (response.getAction().equals("Login")) {
 				if (response.getSource().equals("student")) {
 					try {
-						String query = "SELECT * FROM student_password WHERE stud_ID = '" + ID + "' and password = '"
-								+ password + "'";
-						stt = con.createStatement();
-						res = stt.executeQuery(query);
-
-						if (res.next()) {
-							response.setMessage("Authenticated");
-							os.writeObject(response);
-							os.flush();
-						} else {
-							response.setMessage("Not Authenticated");
-							os.writeObject(response);
-							os.flush();
+						Student_password user = new Student_password(ID,password);
+						List<Student_password> users = user.readPassword();
+						for(Student_password passwords:users)
+						{
+							if(passwords.getPassword().equals(user.getPassword()) && passwords.getId() == user.getId())
+							{
+								System.out.println("Authenticated");
+								response.setMessage("Authenticated");
+								response.setSession(1);
+								os.writeObject(response);
+								os.flush();
+								break;
+							}
 						}
-					} catch (SQLException e) {
-						System.out.println("Error in SQL");
-						e.printStackTrace();
-					}
-				} else {
-					try {
-						String query = "SELECT * FROM employee_password WHERE emp_ID = '" + ID + "' and password = '"
-								+ password + "'";
-						stt = con.createStatement();
-						res = stt.executeQuery(query);
-
-						if (res.next()) {
-							response.setMessage("Authenticated");
-							os.writeObject(response);
-							os.flush();
-						} else {
-							response.setMessage("Not Authenticated");
-							os.writeObject(response);
-							os.flush();
-						}
-					} catch (SQLException e) {
+							
+	
+						
+					} catch (Exception e) {
 						System.out.println("Error in SQL");
 						e.printStackTrace();
 					}
 				}
+				else
+				{
+					Employee_password user = new Employee_password(ID,password);
+					List<Employee_password> users = user.readPassword();
+					for(Employee_password passwords:users)
+					{
+						if(passwords.getPassword().equals(user.getPassword()) && passwords.getId() == user.getId())
+						{
+							System.out.println("Authenticated");
+							response.setMessage("Authenticated");
+							response.setSession(1);
+							os.writeObject(response);
+							os.flush();
+							break;
+						}
+					}
+				}
+					
+
 
 			}
-			
-
-			if (response.getSource().equals("student")) {
-				while (true) {
-					if (response.getAction().equals("view fee")) {
+				if (response.getAction().equals("view")) {
 						// Query database for student fees
+					Student_model stud = new Student_model();
+					
+					stud = Student_model.GetStudents(ID);
+					System.out.println("Student retreived " + stud);
+					os.writeObject(stud);
+					os.flush();
+					
+					
 					}
+	
 
 					if (response.getAction().equals("refund")) {
 						// Query database for refund requested
+						FeePayment fees = new FeePayment();
+						
+						fees = FeePayment.GetFeesByID(ID);
+						System.out.println("Records retrieved\n" + fees);
+						os.writeObject(fees);
+						os.flush();
+						}
+					
+					if (response.getAction().equals("select refund")) {
+						// Remove fund from fee table and update student table
+						FeePayment fees = new FeePayment();
+						Student_model stud = new Student_model();
+						fees = FeePayment.GetFeesByID(transactionID);
+						transactionAmount = fees.getAmount();
+						//->Update student object here 
+						Student_model.UpdateStudent(ID, transactionAmount);
+						FeePayment.RemoveFeePaymentByID(transactionID);
+						
+						os.writeObject(fees);
+						os.flush();
+						os.writeObject(stud);
+						os.flush();
+						
+						
 					}
+					
+					
+					
 					if (response.getAction().equals("clearance")) {
 						// Query database and set financial clearance field of
 						// student table
@@ -114,25 +157,30 @@ public class MultiThreadServer implements Runnable {
 					{
 						//Query database for enquiry table and insert new enquiry 
 					}
+					
+					if(response.getAction().equals("generate fees"))
+					{
+						//Query database for module and generate fee payment info 
+					}
+					
 					if (response.getAction().equals("Exit")) {
 						sock.close();
 						System.out.println("Client connection closed!");
-						break;
 					}
-					
-				}
 
-			}
+
+					factories.DatabaseFactory.closeFactory();
 
 		} catch (IOException e) {
 			System.out.println(e);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+//		} catch (ClassNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
 	}
 

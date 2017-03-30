@@ -1,9 +1,10 @@
-package models;
+package sdsmh_server;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.rmi.UnknownHostException;
 import java.security.MessageDigest;
@@ -23,10 +24,9 @@ public class Student {
 	private String dob;
 	private String address;
 	//============================//
-	static Socket requestSocket;
+	static Socket client;
     static ObjectOutputStream output;
     static ObjectInputStream input;
-	static String[] message;
     
 	public Student(){
 		this.studentID = null;
@@ -126,19 +126,29 @@ public class Student {
 	}
 
 //...........................................................................................//
-	public static Student studentLogin(String action, String studentID, String password){
+	public static Student studentLogin(String action, int studentID, String password){
 		Student stud = null;
 		try{
-			requestSocket = new Socket("127.0.0.1",3306);//host and port subject to change
-			output = new ObjectOutputStream(requestSocket.getOutputStream());
-			message = new String[3];
-			message[0] = action;
-			message[1] = studentID;
-			message[2] = getSHA_256Hash(password);
+			Response message = new Response();
+			Response receivedMessage;
+			//Connect to server class
+			client = new Socket(InetAddress.getLocalHost(),1234);
+			System.out.println("Connected to : " + client.getInetAddress().getHostName());
+			//Send message to server
+			output = new ObjectOutputStream(client.getOutputStream());
+			message.setAction("Login");
+			message.setMessage("need to login");
+			message.setSource(client.getInetAddress().getHostName());
+			message.setId(studentID);
+			message.setPassword(password);
 			output.writeObject(message);
 			output.flush();
-			input = new ObjectInputStream(requestSocket.getInputStream());
-			stud = (Student)input.readObject();
+			//output.close();
+			//Reading message from server
+					input = new ObjectInputStream(client.getInputStream());
+					receivedMessage = (Response) input.readObject();
+					System.out.println("Response source: "+ receivedMessage.getRepsonseSource());
+					System.out.println("" + receivedMessage.getMessage());
 		}catch(UnknownHostException e){
 			JOptionPane.showMessageDialog(null, e.getMessage()); 
 		}
@@ -150,7 +160,7 @@ public class Student {
 			try{
 				input.close();
 				output.close();
-				requestSocket.close();
+				client.close();
 			}catch(IOException e){
 				JOptionPane.showMessageDialog(null, e.getMessage()); 
 			}

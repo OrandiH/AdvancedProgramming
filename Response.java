@@ -7,13 +7,15 @@ public class Response implements ResponseMethods,Serializable{
 	private static final long serialVersionUID = 1L;
 	private String message;
 	private String Action;
+	private int Session;
 	private int status;
 	private String source;
 	//Credentials for login 
 	private int id;
-
-
-	private String password; 
+	private String password;
+	//Fee Payment information
+	private int fee_id;
+	private float amount;
 	
 	//Constructors
 	//DEFAULT
@@ -23,14 +25,20 @@ public class Response implements ResponseMethods,Serializable{
 		this.Action = "";
 		this.status = 0;
 		this.source = "";
+		this.Session = 0;
+		this.fee_id = 0;
+		this.amount = 0.0f;
 	}
 	//PRIMARY
-	public Response(String message,String action,int status,String source)
+	public Response(String message,String action,int status,String source,int session,int fee_id,float amount)
 	{
 		this.message = message;
 		this.Action = action;
 		this.status = status;
 		this.source = source;
+		this.Session = session;
+		this.fee_id = fee_id;
+		this.amount = amount;
 	}
 	//COPY
 	public Response(Response A)
@@ -39,6 +47,22 @@ public class Response implements ResponseMethods,Serializable{
 		this.Action = A.Action;
 		this.source = A.source;
 		this.status = A.status;
+		this.Session = A.Session;
+		this.fee_id = A.fee_id;
+		this.amount = A.amount;
+	}
+	
+	public int getFee_id() {
+		return fee_id;
+	}
+	public void setFee_id(int fee_id) {
+		this.fee_id = fee_id;
+	}
+	public float getAmount() {
+		return amount;
+	}
+	public void setAmount(float amount) {
+		this.amount = amount;
 	}
 	//GETTERS AND SETTERS
 	public String getMessage() {
@@ -78,7 +102,12 @@ public class Response implements ResponseMethods,Serializable{
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	
+	public int getSession() {
+		return Session;
+	}
+	public void setSession(int session) {
+		Session = session;
+	}
 	
 	
 	
